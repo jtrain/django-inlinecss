@@ -4,6 +4,7 @@ Test the functioning of the templatetag itself.
 The actual CSS inlining displayed here is extremely simple:
 tests of the CSS selector functionality is independent.
 """
+import StringIO
 import os
 
 from django.test import TestCase
@@ -177,3 +178,28 @@ class DebugModeStaticfilesTests(TestCase):
         template = get_template('single_staticfiles_css.html')
         template.render(Context({}))
         path.assert_called_once_with("foobar.css")
+
+
+def notimplemented_path(self, *args, **kwargs):
+    raise NotImplementedError("this isn't implemented for S3 storages")
+
+@override_settings(
+    TEMPLATE_DIRS=templates_override,
+    STATIC_ROOT=TESTS_STATIC_DIR)
+class PathNotImplementedStaticfilesTest(TestCase):
+
+    _storage =  'django.contrib.staticfiles.storage.staticfiles_storage'
+
+    @patch(_storage + '.path', new=notimplemented_path)
+    @patch(_storage + '.open')
+    def test_notimplementedpath_uses_storage_open(self, open):
+
+        # bold and beautiful.
+        file_contents = StringIO.StringIO('* {font-weight: bold;}')
+        open.return_value = file_contents
+
+        template = get_template('single_staticfiles_css.html')
+        template.render(Context({}))
+        open.assert_called_once_with('foobar.css')
+        notimplemented_path.assert_called_once_with('foobar.css')
+
