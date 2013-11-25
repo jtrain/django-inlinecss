@@ -201,5 +201,4 @@ class PathNotImplementedStaticfilesTest(TestCase):
         template = get_template('single_staticfiles_css.html')
         template.render(Context({}))
         open.assert_called_once_with('foobar.css')
-        notimplemented_path.assert_called_once_with('foobar.css')
 

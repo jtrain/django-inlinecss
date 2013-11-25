@@ -22,13 +22,19 @@ class InlineCssNode(template.Node):
             path = expression.resolve(context, True)
             if path is not None:
                 path = smart_unicode(path)
-            if settings.DEBUG:
-                expanded_path = finders.find(path)
-            else:
-                expanded_path = staticfiles_storage.path(path)
 
-            with open(expanded_path) as css_file:
-                css = ''.join((css, css_file.read()))
+            try:
+                if settings.DEBUG:
+                    expanded_path = finders.find(path)
+                else:
+                    expanded_path = staticfiles_storage.path(path)
+
+                with open(expanded_path) as css_file:
+                    css = ''.join((css, css_file.read()))
+                    
+            except NotImplementedError:
+                css = ''.join((css, staticfiles_storage.open(path).read()))
+
 
         engine = conf.get_engine()(html=rendered_contents, css=css)
         return engine.render()
